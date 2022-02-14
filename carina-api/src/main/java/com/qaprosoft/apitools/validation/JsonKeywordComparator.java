@@ -13,22 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package com.qaprosoft.apitools.builder;
+package com.qaprosoft.apitools.validation;
 
-import java.util.Map.Entry;
-import java.util.Properties;
+public interface JsonKeywordComparator {
 
-@Deprecated
-public class NotStringValuesProcessor implements PropertiesProcessor {
+    void compare(String prefix, Object expectedValue, Object actualValue, JsonCompareResultWrapper result);
 
-	@Override
-	public Properties process(Properties in) {
-		Properties out = new Properties();
-		for (Entry<Object, Object> entry : in.entrySet()) {
-			if (!(entry.getValue() instanceof String)) {
-				out.put(entry.getKey(), entry.getValue().toString());
-			}
-		}
-		return out;
-	}
+    boolean isMatch(Object expectedValue);
+
 }

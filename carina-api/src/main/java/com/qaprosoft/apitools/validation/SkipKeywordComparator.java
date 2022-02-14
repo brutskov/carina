@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package com.qaprosoft.apitools.builder;
+package com.qaprosoft.apitools.validation;
 
-import java.util.Map.Entry;
-import java.util.Properties;
+final class SkipKeywordComparator implements JsonKeywordComparator {
 
-@Deprecated
-public class NotStringValuesProcessor implements PropertiesProcessor {
+    @Override
+    public void compare(String prefix, Object expectedValue, Object actualValue, JsonCompareResultWrapper result) {
+        // do nothing
+    }
 
-	@Override
-	public Properties process(Properties in) {
-		Properties out = new Properties();
-		for (Entry<Object, Object> entry : in.entrySet()) {
-			if (!(entry.getValue() instanceof String)) {
-				out.put(entry.getKey(), entry.getValue().toString());
-			}
-		}
-		return out;
-	}
+    @Override
+    public boolean isMatch(Object expectedValue) {
+        return JsonCompareKeywords.SKIP.getKey().equals(expectedValue.toString());
+    }
 }

@@ -15,8 +15,9 @@
  *******************************************************************************/
 package com.qaprosoft.apitools.validation;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.json.JSONArray;
@@ -28,37 +29,51 @@ import org.skyscreamer.jsonassert.comparator.DefaultComparator;
 
 public class JsonKeywordsComparator extends DefaultComparator {
 
-    private String validationFlags[];
+    private final String[] validationFlags;
+    private final List<JsonKeywordComparator> comparators;
+    private final JsonComparatorContext context;
 
     public JsonKeywordsComparator(JSONCompareMode mode, String... validationFlags) {
+        this(mode, null, validationFlags);
+    }
+
+    public JsonKeywordsComparator(JSONCompareMode mode, JsonComparatorContext context, String... validationFlags) {
         super(mode);
         this.validationFlags = validationFlags;
+        this.context = context;
+        this.comparators = new ArrayList<>();
+
+        initializeComparators();
+    }
+
+    private void initializeComparators() {
+        this.comparators.add(new SkipKeywordComparator());
+        this.comparators.add(new TypeKeywordComparator());
+        this.comparators.add(new RegexKeywordComparator());
+        this.comparators.add(new OgnlKeywordsComparator());
+
+        ServiceLoader.load(JsonKeywordComparator.class)
+                .forEach(this.comparators::add);
+
+        if (context != null) {
+            this.comparators.add(new PredicateKeywordComparator(context.getNamedPredicates()));
+            this.comparators.addAll(context.getComparators());
+        }
     }
 
     @Override
     public void compareValues(String prefix, Object expectedValue, Object actualValue, JSONCompareResult result) throws JSONException {
-        if (JsonCompareKeywords.SKIP.getKey().equals(expectedValue.toString())) {
-            // do nothing
-        } else if (expectedValue != null && expectedValue.toString().startsWith(JsonCompareKeywords.TYPE.getKey())) {
-            String expType = expectedValue.toString().replace(JsonCompareKeywords.TYPE.getKey(), "");
-            if (!expType.equals(actualValue.getClass().getSimpleName())) {
-                result.fail(String.format("%s\nValue type '%s' doesn't match to expected type '%s'\n", prefix, actualValue.getClass()
-                        .getSimpleName(), expType));
-            }
-        } else if (expectedValue != null && expectedValue.toString().startsWith(JsonCompareKeywords.REGEX.getKey())) {
-            if (actualValue instanceof Number || actualValue instanceof String) {
-                String actualStr = actualValue.toString();
-                String regex = expectedValue.toString().replace(JsonCompareKeywords.REGEX.getKey(), "");
-                Matcher m = Pattern.compile(regex).matcher(actualStr);
-                if (!m.find()) {
-                    result.fail(String.format("%s\nActual value '%s' doesn't match to expected regex '%s'\n", prefix, actualStr, regex));
-                }
-            } else {
-                super.compareValues(prefix, expectedValue, actualValue, result);
-            }
-        } else {
-            super.compareValues(prefix, expectedValue, actualValue, result);
-        }
+        comparators.stream()
+                .filter(comparator -> comparator.isMatch(expectedValue))
+                .findFirst()
+                .ifPresentOrElse(comparator ->
+                                comparator.compare(prefix, expectedValue, actualValue, new JsonCompareResultWrapper(this, result)),
+                        () -> compareByDefault(prefix, expectedValue, actualValue, result)
+                );
+    }
+
+    void compareByDefault(String prefix, Object expectedValue, Object actualValue, JSONCompareResult result) {
+        super.compareValues(prefix, expectedValue, actualValue, result);
     }
 
     @Override
@@ -141,5 +156,4 @@ public class JsonKeywordsComparator extends DefaultComparator {
             }
         }
     }
-
 }

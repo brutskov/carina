@@ -13,22 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package com.qaprosoft.apitools.builder;
+package com.qaprosoft.apitools.validation;
 
-import java.util.Map.Entry;
-import java.util.Properties;
+import org.skyscreamer.jsonassert.JSONCompareResult;
 
-@Deprecated
-public class NotStringValuesProcessor implements PropertiesProcessor {
+public class JsonCompareResultWrapper {
 
-	@Override
-	public Properties process(Properties in) {
-		Properties out = new Properties();
-		for (Entry<Object, Object> entry : in.entrySet()) {
-			if (!(entry.getValue() instanceof String)) {
-				out.put(entry.getKey(), entry.getValue().toString());
-			}
-		}
-		return out;
-	}
+    private final JsonKeywordsComparator comparatorManager;
+    private final JSONCompareResult result;
+
+    public JsonCompareResultWrapper(JsonKeywordsComparator comparatorManager, JSONCompareResult result) {
+        this.comparatorManager = comparatorManager;
+        this.result = result;
+    }
+
+    public void compareByDefault(String prefix, Object expectedValue, Object actualValue) {
+        comparatorManager.compareByDefault(prefix, expectedValue, actualValue, result);
+    }
+
+    public void fail(String message) {
+        result.fail(message);
+    }
 }
