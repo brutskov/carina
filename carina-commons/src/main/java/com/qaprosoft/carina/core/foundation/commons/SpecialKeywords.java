@@ -62,11 +62,20 @@ public class SpecialKeywords {
     public static final String HTML_REPORT = "emailable-report.html";
     public static final String NULL = "NULL";
 
+    public static final String TEST_NAME_MAP = "{map}";
+    public static final String TEST_NAME_SUITE = "{suite}";
+    public static final String TEST_NAME_TUID = "{tuid}";
+    public static final String TEST_NAME_DATA_PROVIDER_LINE = "{dataprovider}";
+    public static final String TEST_NAME_QUALIFIED_NAME = "{qualified}";
+    public static final String TEST_NAME_CLASS = "{test_class}";
+    public static final String TEST_NAME_HOST = "{host}";
+    public static final String TEST_NAME_INSTANCE = "{instance}";
+    public static final String TEST_NAME_INVOCATION_COUNT = "{invocation}";
     public static final String METHOD_NAME = "{method_name}";
     public static final String METHOD_DESCRIPTION = "{method_description}";
     public static final String METHOD_PRIORITY = "{method_priority}";
     public static final String METHOD_THREAD_POOL_SIZE = "{method_thread_pool_size}";
-    public static final String METHOD_GROUP_NAMES = "{method_group_names}";
+    public static final String METHOD_GROUP_NAMES = "{group_names}";
 
     public static final String TEST_NAME_ARGS_MAP = "testNameArgsMap";
 

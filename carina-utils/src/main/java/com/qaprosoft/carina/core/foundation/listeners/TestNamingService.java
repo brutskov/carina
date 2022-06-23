@@ -84,30 +84,59 @@ public class TestNamingService {
      */     
     @SuppressWarnings("unlikely-arg-type")
     private static String setTestName(ITestResult result) {
-        String name = "";
-
         if (result.getTestContext() == null) {
             throw new RuntimeException("Unable to set Test name without testContext!");
         }
-        @SuppressWarnings("unchecked")
-        Map<Object[], String> testnameMap = (Map<Object[], String>) result.getTestContext().getAttribute(SpecialKeywords.TEST_NAME_ARGS_MAP);
 
-        if (testnameMap != null) {
+        ITestNGMethod method = result.getMethod();
+
+        String name = Configuration.get(Configuration.Parameter.TEST_NAMING_PATTERN);
+        name = name.replace(SpecialKeywords.TEST_NAME_MAP, getTestNameMapName(result))
+                .replace(SpecialKeywords.TEST_NAME_SUITE, result.getTestContext().getCurrentXmlTest().getName())
+                .replace(SpecialKeywords.TEST_NAME_TUID, getMethodUID(result))
+                .replace(SpecialKeywords.METHOD_NAME, method.getMethodName())
+                .replace(SpecialKeywords.METHOD_PRIORITY, String.valueOf(method.getPriority()))
+                .replace(SpecialKeywords.METHOD_THREAD_POOL_SIZE, String.valueOf(method.getThreadPoolSize()))
+                .replace(SpecialKeywords.METHOD_GROUP_NAMES, Arrays.toString(method.getGroups()))
+                .replace(SpecialKeywords.METHOD_DESCRIPTION, method.getDescription())
+                .replace(SpecialKeywords.TEST_NAME_QUALIFIED_NAME, method.getQualifiedName())
+                .replace(SpecialKeywords.TEST_NAME_CLASS, method.getTestClass().getName())
+                .replace(SpecialKeywords.TEST_NAME_HOST, result.getHost())
+                .replace(SpecialKeywords.TEST_NAME_INSTANCE, result.getInstanceName())
+                .replace(SpecialKeywords.TEST_NAME_DATA_PROVIDER_LINE, getDataProviderLine(result))
+                // introduce invocation count calculation here as in multi threading mode TestNG doesn't provide valid
+                // getInvocationCount() value
+                .replace(SpecialKeywords.TEST_NAME_INVOCATION_COUNT, appendInvocationCount(result, name))
+                .trim()
+                .replaceAll("\\s+", " ");
+        LOGGER.debug("testName: {}", name);
+
+        testName.set(name);
+        return testName.get();
+    }
+
+    // todo add description
+    private static String getTestNameMapName(ITestResult result) {
+        String testNameMapName = "";
+        // todo add description
+        @SuppressWarnings("unchecked")
+        Map<Object[], String> testNameMap = (Map<Object[], String>) result.getTestContext().getAttribute(SpecialKeywords.TEST_NAME_ARGS_MAP);
+
+        if (testNameMap != null) {
             String testHash = String.valueOf(Arrays.hashCode(result.getParameters()));
-            if (testnameMap.containsKey(testHash)) {
-                name = testnameMap.get(testHash);
+            if (testNameMap.containsKey(testHash)) {
+                testNameMapName = testNameMap.get(testHash);
             }
         }
+        return testNameMapName;
+    }
 
-        if (name.isEmpty()) {
-            name = result.getTestContext().getCurrentXmlTest().getName();
-        }
-
+    private static String getMethodUID(ITestResult result) {
+        String methodUID = "";
         // TODO: find the bext way to calculate TUID/hash
         if (result.getTestContext().getCurrentXmlTest().getAllParameters().containsKey(SpecialKeywords.EXCEL_DS_CUSTOM_PROVIDER) ||
                 result.getTestContext().getCurrentXmlTest().getAllParameters().containsKey(SpecialKeywords.DS_CUSTOM_PROVIDER)) {
             // AUTO-274 "Pass"ing status set on emailable report when a test step fails
-            String methodUID = "";
             for (int i = 0; i < result.getParameters().length; i++) {
                 if (result.getParameters()[i] != null) {
                     if (result.getParameters()[i].toString().contains(SpecialKeywords.TUID + ":")) {
@@ -116,29 +145,18 @@ public class TestNamingService {
                     }
                 }
             }
-            if (!methodUID.isEmpty()) {
-                name = methodUID + " - " + name;
-            }
         }
-
-        name = name + " - " + getMethodName(result);
-        LOGGER.debug("testName: " + name);
-
-        // introduce invocation count calculation here as in multi threading mode TestNG doesn't provide valid
-        // getInvocationCount() value
-        name = appendDataProviderLine(result, name);
-        name = appendInvocationCount(result, name);
-        
-        testName.set(name);
-        return testName.get();
+        return methodUID;
     }
     
     /**
      * get Test Method name
-     * 
+     *
+     * @deprecated
      * @param result ITestResult
      * @return String method name
      */
+    @Deprecated(since = "7.4.22", forRemoval = true)
     public static String getMethodName(ITestResult result) {
         // adjust testName using pattern
         ITestNGMethod m = result.getMethod();
@@ -173,10 +191,10 @@ public class TestNamingService {
      * calculate InvocationCount number based on test name
      * 
      * @param testResult ITestResult
-     * @param testName String
      * @return int invCount
      */
     private static String appendInvocationCount(ITestResult testResult, String testName) {
+        String invocationCount = "";
         int expectedInvocationCount = getInvocationCount(testResult);
         if (expectedInvocationCount > 1) {
             // adding extra zero at the beginning of the invocation count
@@ -184,9 +202,9 @@ public class TestNamingService {
             String lineFormat = " [InvCount=%0" + indexMaxLength + "d]";
             int currentInvocationCount = testNameInvCounter.computeIfAbsent(testName, $ -> new AtomicInteger(0))
                                                              .incrementAndGet();
-            testName += String.format(lineFormat, currentInvocationCount);
+            invocationCount = String.format(lineFormat, currentInvocationCount);
         }
-        return testName;
+        return invocationCount;
     }
     private static int getInvocationCount(ITestResult testResult) {
         ITestNGMethod[] methods = testResult.getTestContext().getAllTestMethods();
@@ -197,7 +215,8 @@ public class TestNamingService {
                      .orElse(0);
     }
     
-    private static String appendDataProviderLine(ITestResult testResult, String testName) {
+    private static String getDataProviderLine(ITestResult testResult) {
+        String dataProviderLine = "";
         ITestNGMethod testMethod = testResult.getMethod();
         ITestContext testContext = testResult.getTestContext();
         Object[] parameters = testResult.getParameters();
@@ -208,9 +227,9 @@ public class TestNamingService {
             int indexMaxLength = Integer.toString(dataProviderSize).length() + 1;
             String lineFormat = " [L%0" + indexMaxLength + "d]";
             int index = RunContextService.getCurrentDataProviderIndex(testMethod, testContext, parameters) + 1;
-            testName += String.format(lineFormat, index);
+            dataProviderLine = String.format(lineFormat, index);
         }
-        return testName;
+        return dataProviderLine;
     }
     
 }
