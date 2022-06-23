@@ -147,6 +147,7 @@ public class TestNamingService {
         name = name.replace(SpecialKeywords.METHOD_NAME, m.getMethodName());
         name = name.replace(SpecialKeywords.METHOD_PRIORITY, String.valueOf(m.getPriority()));
         name = name.replace(SpecialKeywords.METHOD_THREAD_POOL_SIZE, String.valueOf(m.getThreadPoolSize()));
+        name = name.replace(SpecialKeywords.METHOD_GROUP_NAMES, Arrays.toString(m.getGroups()));
 
         if (m.getDescription() != null) {
             LOGGER.debug("Test method description: " + m.getDescription());
