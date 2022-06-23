@@ -66,7 +66,7 @@ public class SpecialKeywords {
     public static final String METHOD_DESCRIPTION = "{method_description}";
     public static final String METHOD_PRIORITY = "{method_priority}";
     public static final String METHOD_THREAD_POOL_SIZE = "{method_thread_pool_size}";
-    public static final String METHOD_GROUP_NAMES = "{group_names}";
+    public static final String METHOD_GROUP_NAMES = "{method_group_names}";
 
     public static final String TEST_NAME_ARGS_MAP = "testNameArgsMap";
 
