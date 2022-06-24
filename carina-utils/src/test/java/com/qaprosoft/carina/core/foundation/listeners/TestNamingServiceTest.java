@@ -56,9 +56,7 @@ public class TestNamingServiceTest {
                 result.getMethod().getMethodName() + " " +
                 result.getMethod().getPriority() + " " +
                 result.getMethod().getThreadPoolSize() + " " +
-                result.getMethod().getDescription() + " " +
-                (result.getHost() == null ? "localhost" : result.getHost());
-
+                result.getMethod().getDescription();
         expectedTestName = expectedTestName.trim()
                 .replaceAll("\\s+", " ");
 

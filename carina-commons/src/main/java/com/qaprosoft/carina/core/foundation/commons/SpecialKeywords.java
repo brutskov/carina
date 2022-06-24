@@ -66,10 +66,7 @@ public class SpecialKeywords {
     public static final String TEST_NAME_SUITE = "{suite}";
     public static final String TEST_NAME_TUID = "{tuid}";
     public static final String TEST_NAME_DATA_PROVIDER_LINE = "{dataprovider}";
-    public static final String TEST_NAME_QUALIFIED_NAME = "{qualified}";
     public static final String TEST_NAME_CLASS = "{test_class}";
-    public static final String TEST_NAME_HOST = "{host}";
-    public static final String TEST_NAME_INSTANCE = "{instance}";
     public static final String TEST_NAME_INVOCATION_COUNT = "{invocation}";
     public static final String METHOD_NAME = "{method_name}";
     public static final String METHOD_DESCRIPTION = "{method_description}";

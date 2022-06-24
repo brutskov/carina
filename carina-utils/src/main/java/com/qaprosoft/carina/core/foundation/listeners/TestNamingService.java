@@ -100,10 +100,7 @@ public class TestNamingService {
                 .replace(SpecialKeywords.METHOD_THREAD_POOL_SIZE, String.valueOf(method.getThreadPoolSize()))
                 .replace(SpecialKeywords.METHOD_GROUP_NAMES, String.join(", ", method.getGroups()))
                 .replace(SpecialKeywords.METHOD_DESCRIPTION, String.valueOf(method.getDescription()))
-                .replace(SpecialKeywords.TEST_NAME_QUALIFIED_NAME, String.valueOf(method.getQualifiedName()))
                 .replace(SpecialKeywords.TEST_NAME_CLASS, method.getTestClass().getRealClass().getSimpleName())
-                .replace(SpecialKeywords.TEST_NAME_HOST, String.valueOf(result.getHost() == null ? "localhost" : result.getHost()))
-                .replace(SpecialKeywords.TEST_NAME_INSTANCE, String.valueOf(result.getInstanceName()))
                 .replace(SpecialKeywords.TEST_NAME_DATA_PROVIDER_LINE, String.valueOf(getDataProviderLine(result)))
                 // introduce invocation count calculation here as in multi threading mode TestNG doesn't provide valid
                 // getInvocationCount() value
