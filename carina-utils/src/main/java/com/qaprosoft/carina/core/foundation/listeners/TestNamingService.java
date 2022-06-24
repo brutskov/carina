@@ -98,7 +98,7 @@ public class TestNamingService {
                 .replace(SpecialKeywords.METHOD_NAME, String.valueOf(method.getMethodName()))
                 .replace(SpecialKeywords.METHOD_PRIORITY, String.valueOf(method.getPriority()))
                 .replace(SpecialKeywords.METHOD_THREAD_POOL_SIZE, String.valueOf(method.getThreadPoolSize()))
-                .replace(SpecialKeywords.METHOD_GROUP_NAMES, Arrays.toString(method.getGroups()))
+                .replace(SpecialKeywords.METHOD_GROUP_NAMES, String.join(", ", method.getGroups()))
                 .replace(SpecialKeywords.METHOD_DESCRIPTION, String.valueOf(method.getDescription()))
                 .replace(SpecialKeywords.TEST_NAME_QUALIFIED_NAME, String.valueOf(method.getQualifiedName()))
                 .replace(SpecialKeywords.TEST_NAME_CLASS, method.getTestClass().getRealClass().getSimpleName())
