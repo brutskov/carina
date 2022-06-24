@@ -84,29 +84,30 @@ public class TestNamingService {
      */     
     @SuppressWarnings("unlikely-arg-type")
     private static String setTestName(ITestResult result) {
+        String name = "";
         if (result.getTestContext() == null) {
             throw new RuntimeException("Unable to set Test name without testContext!");
         }
 
         ITestNGMethod method = result.getMethod();
 
-        String name = Configuration.get(Configuration.Parameter.TEST_NAMING_PATTERN);
-        name = name.replace(SpecialKeywords.TEST_NAME_MAP, getTestNameMapName(result))
-                .replace(SpecialKeywords.TEST_NAME_SUITE, result.getTestContext().getCurrentXmlTest().getName())
-                .replace(SpecialKeywords.TEST_NAME_TUID, getMethodUID(result))
-                .replace(SpecialKeywords.METHOD_NAME, method.getMethodName())
+        name = Configuration.get(Configuration.Parameter.TEST_NAMING_PATTERN);
+        name = name.replace(SpecialKeywords.TEST_NAME_MAP, String.valueOf(getTestNameMapName(result)))
+                .replace(SpecialKeywords.TEST_NAME_SUITE, String.valueOf(result.getTestContext().getCurrentXmlTest().getName()))
+                .replace(SpecialKeywords.TEST_NAME_TUID, String.valueOf(getMethodUID(result)))
+                .replace(SpecialKeywords.METHOD_NAME, String.valueOf(method.getMethodName()))
                 .replace(SpecialKeywords.METHOD_PRIORITY, String.valueOf(method.getPriority()))
                 .replace(SpecialKeywords.METHOD_THREAD_POOL_SIZE, String.valueOf(method.getThreadPoolSize()))
                 .replace(SpecialKeywords.METHOD_GROUP_NAMES, Arrays.toString(method.getGroups()))
-                .replace(SpecialKeywords.METHOD_DESCRIPTION, method.getDescription())
-                .replace(SpecialKeywords.TEST_NAME_QUALIFIED_NAME, method.getQualifiedName())
-                .replace(SpecialKeywords.TEST_NAME_CLASS, method.getTestClass().getName())
-                .replace(SpecialKeywords.TEST_NAME_HOST, result.getHost())
-                .replace(SpecialKeywords.TEST_NAME_INSTANCE, result.getInstanceName())
-                .replace(SpecialKeywords.TEST_NAME_DATA_PROVIDER_LINE, getDataProviderLine(result))
+                .replace(SpecialKeywords.METHOD_DESCRIPTION, String.valueOf(method.getDescription()))
+                .replace(SpecialKeywords.TEST_NAME_QUALIFIED_NAME, String.valueOf(method.getQualifiedName()))
+                .replace(SpecialKeywords.TEST_NAME_CLASS, method.getTestClass().getRealClass().getSimpleName())
+                .replace(SpecialKeywords.TEST_NAME_HOST, String.valueOf(result.getHost() == null ? "localhost" : result.getHost()))
+                .replace(SpecialKeywords.TEST_NAME_INSTANCE, String.valueOf(result.getInstanceName()))
+                .replace(SpecialKeywords.TEST_NAME_DATA_PROVIDER_LINE, String.valueOf(getDataProviderLine(result)))
                 // introduce invocation count calculation here as in multi threading mode TestNG doesn't provide valid
                 // getInvocationCount() value
-                .replace(SpecialKeywords.TEST_NAME_INVOCATION_COUNT, appendInvocationCount(result, name))
+                .replace(SpecialKeywords.TEST_NAME_INVOCATION_COUNT, String.valueOf(appendInvocationCount(result, name)))
                 .trim()
                 .replaceAll("\\s+", " ");
         LOGGER.debug("testName: {}", name);
