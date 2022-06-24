@@ -93,7 +93,7 @@ public class TestNamingService {
 
         name = Configuration.get(Configuration.Parameter.TEST_NAMING_PATTERN);
         name = name.replace(SpecialKeywords.TEST_NAME_MAP, String.valueOf(getTestNameMapName(result)))
-                .replace(SpecialKeywords.TEST_NAME_SUITE, String.valueOf(result.getTestContext().getCurrentXmlTest().getName()))
+                .replace(SpecialKeywords.TEST_NAME, String.valueOf(result.getTestContext().getCurrentXmlTest().getName()))
                 .replace(SpecialKeywords.TEST_NAME_TUID, String.valueOf(getMethodUID(result)))
                 .replace(SpecialKeywords.METHOD_NAME, String.valueOf(method.getMethodName()))
                 .replace(SpecialKeywords.METHOD_PRIORITY, String.valueOf(method.getPriority()))

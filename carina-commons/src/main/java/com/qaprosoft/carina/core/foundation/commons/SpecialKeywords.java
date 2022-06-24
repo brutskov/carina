@@ -63,7 +63,7 @@ public class SpecialKeywords {
     public static final String NULL = "NULL";
 
     public static final String TEST_NAME_MAP = "{map}";
-    public static final String TEST_NAME_SUITE = "{suite}";
+    public static final String TEST_NAME = "{test_name}";
     public static final String TEST_NAME_TUID = "{tuid}";
     public static final String TEST_NAME_DATA_PROVIDER_LINE = "{dataprovider}";
     public static final String TEST_NAME_CLASS = "{test_class}";
