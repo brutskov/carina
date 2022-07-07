@@ -1115,7 +1115,15 @@ public class ExtendedWebElement implements IWebElement {
             }
 
             // we can't initiate ExtendedWebElement using by as it belongs to the list of elements
-            extendedWebElements.add(new ExtendedWebElement(generateByForList(by, i), name, this.driver, getElement()));
+
+            if (this.by.toString().contains("css:")) {
+                ExtendedWebElement tempElement = new ExtendedWebElement(element, name);
+                tempElement.setBy(tempElement.generateByForList(by, i));
+                extendedWebElements.add(tempElement);
+            } else {
+                extendedWebElements.add(new ExtendedWebElement(generateByForList(by, i), name, this.driver, getElement()));
+            }
+
             i++;
         }
         return extendedWebElements;
