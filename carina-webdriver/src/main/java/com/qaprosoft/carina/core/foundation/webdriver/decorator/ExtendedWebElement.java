@@ -1116,7 +1116,7 @@ public class ExtendedWebElement implements IWebElement {
 
             // we can't initiate ExtendedWebElement using by as it belongs to the list of elements
 
-            if (this.by.toString().contains("css:")) {
+            if (this.by.toString().contains("css:") || this.by.toString().contains("By.cssSelector:")) {
                 ExtendedWebElement tempElement = new ExtendedWebElement(element, name);
                 tempElement.setBy(tempElement.generateByForList(by, i));
                 extendedWebElements.add(tempElement);
