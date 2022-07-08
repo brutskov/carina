@@ -1095,9 +1095,9 @@ public class ExtendedWebElement implements IWebElement {
     }
 
     public List<ExtendedWebElement> findExtendedWebElements(final By by, long timeout) {
-        List<ExtendedWebElement> extendedWebElements = new ArrayList<ExtendedWebElement>();
-        List<WebElement> webElements = new ArrayList<WebElement>();
-        
+        List<ExtendedWebElement> extendedWebElements = new ArrayList<>();
+
+        List<WebElement> webElements;
         if (isPresent(by, timeout)) {
             webElements = getElement().findElements(by);
         } else {
@@ -1117,9 +1117,9 @@ public class ExtendedWebElement implements IWebElement {
             // we can't initiate ExtendedWebElement using by as it belongs to the list of elements
 
             if (this.by.toString().contains("css:") || this.by.toString().contains("By.cssSelector:")) {
-                ExtendedWebElement tempElement = new ExtendedWebElement(getElement(), name);
-                tempElement.setBy(tempElement.generateByForList(by, i));
-                extendedWebElements.add(tempElement);
+                ExtendedWebElement tempElement = new ExtendedWebElement(getElement(), this.name);
+                tempElement.setBy(tempElement.generateByForList(this.by, i));
+                extendedWebElements.add(new ExtendedWebElement(by, name, this.driver, tempElement.getElement()));
             } else {
                 extendedWebElements.add(new ExtendedWebElement(generateByForList(by, i), name, this.driver, getElement()));
             }
