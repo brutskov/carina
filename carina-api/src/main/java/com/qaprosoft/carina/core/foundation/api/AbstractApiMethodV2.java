@@ -61,43 +61,43 @@ public abstract class AbstractApiMethodV2 extends AbstractApiMethod {
      * and @ResponseTemplatePath if present
      */
     public AbstractApiMethodV2() {
-        super();
-        setHeaders(ACCEPT_ALL_HEADER);
-        initPathsFromAnnotation();
-        setProperties(new Properties());
+        this(null, null, new Properties());
     }
 
     public AbstractApiMethodV2(String rqPath, String rsPath, String propertiesPath) {
-        super();
-        setHeaders(ACCEPT_ALL_HEADER);
-        setProperties(propertiesPath);
-        this.rqPath = rqPath;
-        this.rsPath = rsPath;
-    }
-
-    public AbstractApiMethodV2(String rqPath, String rsPath, Properties properties) {
-        super();
-        setHeaders(ACCEPT_ALL_HEADER);
-        if (properties != null) {
-            this.properties = PropertiesProcessorMain.processProperties(properties, ignoredPropertiesProcessorClasses);
-        }
-        this.rqPath = rqPath;
-        this.rsPath = rsPath;
+        this(rqPath, rsPath, loadProperties(propertiesPath));
     }
 
     public AbstractApiMethodV2(String rqPath, String rsPath) {
         this(rqPath, rsPath, new Properties());
     }
 
-    private void initPathsFromAnnotation() {
+    public AbstractApiMethodV2(String rqPath, String rsPath, Properties properties) {
+        super();
+        setHeaders(ACCEPT_ALL_HEADER);
+        if (properties != null) {
+            setProperties(properties);
+        }
+        this.rqPath = rqPath != null ? rqPath : resolveRequestTemplatePathFromAnnotation();
+        this.rsPath = rsPath != null ? rsPath : resolveResponseTemplatePathFromAnnotation();
+    }
+
+    private String resolveRequestTemplatePathFromAnnotation() {
+        String result = null;
         RequestTemplatePath requestTemplatePath = this.getClass().getAnnotation(RequestTemplatePath.class);
         if (requestTemplatePath != null) {
-            this.rqPath = requestTemplatePath.path();
+            result = requestTemplatePath.path();
         }
+        return result;
+    }
+
+    private String resolveResponseTemplatePathFromAnnotation() {
+        String result = null;
         ResponseTemplatePath responseTemplatePath = this.getClass().getAnnotation(ResponseTemplatePath.class);
         if (responseTemplatePath != null) {
-            this.rsPath = responseTemplatePath.path();
+            result = responseTemplatePath.path();
         }
+        return result;
     }
 
     /**
@@ -177,6 +177,12 @@ public abstract class AbstractApiMethodV2 extends AbstractApiMethod {
      * @param propertiesPath String path to properties file
      */
     public void setProperties(String propertiesPath) {
+        Properties properties = loadProperties(propertiesPath);
+        setProperties(properties);
+    }
+
+    private static Properties loadProperties(String propertiesPath) {
+        Properties properties;
         URL baseResource = ClassLoader.getSystemResource(propertiesPath);
         if (baseResource != null) {
             properties = new Properties();
@@ -189,7 +195,7 @@ public abstract class AbstractApiMethodV2 extends AbstractApiMethod {
         } else {
             throw new RuntimeException("Properties can't be found by path: " + propertiesPath);
         }
-        properties = PropertiesProcessorMain.processProperties(properties, ignoredPropertiesProcessorClasses);
+        return properties;
     }
 
     public void ignorePropertiesProcessor(Class<? extends PropertiesProcessor> ignoredPropertiesProcessorClass) {

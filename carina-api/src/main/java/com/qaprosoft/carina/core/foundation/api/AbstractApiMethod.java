@@ -71,7 +71,7 @@ import io.restassured.specification.RequestSpecification;
 
 public abstract class AbstractApiMethod extends HttpClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-    private StringBuilder bodyContent = null;
+    private StringBuilder bodyContent;
     protected String methodPath = null;
     protected HttpMethodType methodType = null;
     protected Object response;
@@ -108,25 +108,24 @@ public abstract class AbstractApiMethod extends HttpClient {
         } else {
             methodType = HttpMethodType.valueOf(typePath);
         }
-
     }
 
     private void initContentTypeFromAnnotation() {
         ContentType contentTypeA = this.getClass().getAnnotation(ContentType.class);
-        if (contentTypeA == null) {
-            contentTypeEnum = ContentTypeEnum.JSON;
-            this.request.contentType(ContentTypeEnum.JSON.getStringValues()[0]);
-            return;
-        }
-
-        if (ArrayUtils.contains(ContentTypeEnum.JSON.getStringValues(), contentTypeA.type())) {
-            contentTypeEnum = ContentTypeEnum.JSON;
-        } else if (ArrayUtils.contains(ContentTypeEnum.XML.getStringValues(), contentTypeA.type())) {
-            contentTypeEnum = ContentTypeEnum.XML;
+        if (contentTypeA != null) {
+            this.contentTypeEnum = resolveContentType(contentTypeA);
+            this.request.contentType(contentTypeA.type());
         } else {
-            contentTypeEnum = ContentTypeEnum.NA;
+            this.contentTypeEnum = ContentTypeEnum.JSON;
+            this.request.contentType(ContentTypeEnum.JSON.getStringValues()[0]);
         }
-        this.request.contentType(contentTypeA.type());
+    }
+
+    private ContentTypeEnum resolveContentType(ContentType contentTypeA) {
+        return Arrays.stream(ContentTypeEnum.values())
+                .filter(ct -> ArrayUtils.contains(ct.getStringValues(), contentTypeA.type()))
+                .findFirst()
+                .orElse(ContentTypeEnum.NA);
     }
 
     private void replaceUrlPlaceholders() {
@@ -144,6 +143,15 @@ public abstract class AbstractApiMethod extends HttpClient {
         }
     }
 
+    public void replaceUrlPlaceholder(String placeholder, String value) {
+        if (value != null) {
+            methodPath = methodPath.replace("${" + placeholder + "}", value);
+        } else {
+            methodPath = methodPath.replace("${" + placeholder + "}", "");
+            methodPath = StringUtils.removeEnd(methodPath, "/");
+        }
+    }
+
     private List<String> getParamsFromUrl() {
         List<String> params = new ArrayList<>();
         String path = methodPath;
@@ -157,9 +165,11 @@ public abstract class AbstractApiMethod extends HttpClient {
 
     public void setHeaders(String... headerKeyValues) {
         for (String headerKeyValue : headerKeyValues) {
-            String key = headerKeyValue.split("=", 2)[0];
-            String value = headerKeyValue.split("=", 2)[1];
-            request.header(key, value);
+            String[] headerSlices = headerKeyValue.split("=", 2);
+            if (headerSlices.length != 2) {
+                throw new RuntimeException("The header must contain a key-value pair and a '=' character between them");
+            }
+            request.header(headerSlices[0], headerSlices[1]);
         }
     }
 
@@ -198,15 +208,6 @@ public abstract class AbstractApiMethod extends HttpClient {
 
     public void addCookies(Map<String, String> cookies) {
         request.given().cookies(cookies);
-    }
-
-    public void replaceUrlPlaceholder(String placeholder, String value) {
-        if (value != null) {
-            methodPath = methodPath.replace("${" + placeholder + "}", value);
-        } else {
-            methodPath = methodPath.replace("${" + placeholder + "}", "");
-            methodPath = StringUtils.removeEnd(methodPath, "/");
-        }
     }
 
     public void expectResponseStatus(HttpResponseStatusType status) {
@@ -293,7 +294,7 @@ public abstract class AbstractApiMethod extends HttpClient {
         if (bodyContent.length() != 0)
             request.body(bodyContent.toString());
 
-        Response rs = null;
+        Response rs;
 
         PrintStream ps = null;
         if (logRequest || logResponse) {

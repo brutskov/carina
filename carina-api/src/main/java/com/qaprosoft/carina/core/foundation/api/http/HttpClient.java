@@ -27,7 +27,7 @@ import io.restassured.specification.RequestSpecification;
  */
 public class HttpClient {
     public static Response send(RequestSpecification request, String methodPath, HttpMethodType methodType) {
-        Response response = null;
+        Response response;
         SystemProxy.setupProxy();
         switch (methodType) {
         case HEAD:
