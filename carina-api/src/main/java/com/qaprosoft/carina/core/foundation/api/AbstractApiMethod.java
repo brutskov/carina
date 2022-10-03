@@ -31,7 +31,10 @@ import java.util.Map;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 
-import org.apache.commons.lang3.ArrayUtils;
+import com.qaprosoft.carina.core.foundation.api.resolver.AnnotationHttpRequestStartLineResolver;
+import com.qaprosoft.carina.core.foundation.api.resolver.HttpRequestStartLineResolver;
+import com.qaprosoft.carina.core.foundation.api.resolver.MethodBasedHttpRequestStartLineResolver;
+import com.qaprosoft.carina.core.foundation.api.resolver.PropsHttpRequestStartLineResolver;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.hamcrest.Matcher;
@@ -41,8 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
-import com.qaprosoft.carina.core.foundation.api.annotation.ContentType;
-import com.qaprosoft.carina.core.foundation.api.annotation.Endpoint;
 import com.qaprosoft.carina.core.foundation.api.annotation.HideRequestBodyPartsInLogs;
 import com.qaprosoft.carina.core.foundation.api.annotation.HideRequestHeadersInLogs;
 import com.qaprosoft.carina.core.foundation.api.annotation.HideResponseBodyPartsInLogs;
@@ -70,7 +71,18 @@ import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 
 public abstract class AbstractApiMethod extends HttpClient {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+    private static final List<HttpRequestStartLineResolver> HTTP_REQUEST_START_LINE_RESOLVERS = List.of(
+            new AnnotationHttpRequestStartLineResolver(),
+            new MethodBasedHttpRequestStartLineResolver(),
+            new PropsHttpRequestStartLineResolver()
+    );
+
+    private final boolean ignoreSSL = Configuration.getBoolean(Parameter.IGNORE_SSL);
+    protected final HttpRequestStartLineResolver httpRequestStartLineResolver;
+
     private StringBuilder bodyContent;
     protected String methodPath = null;
     protected HttpMethodType methodType = null;
@@ -79,53 +91,34 @@ public abstract class AbstractApiMethod extends HttpClient {
     protected ContentTypeEnum contentTypeEnum;
     private boolean logRequest = Configuration.getBoolean(Parameter.LOG_ALL_JSON);
     private boolean logResponse = Configuration.getBoolean(Parameter.LOG_ALL_JSON);
-    private boolean ignoreSSL = Configuration.getBoolean(Parameter.IGNORE_SSL);
 
     public AbstractApiMethod() {
-        init(getClass());
-        bodyContent = new StringBuilder();
-        request = given();
-        initContentTypeFromAnnotation();
-        replaceUrlPlaceholders();
-    }
+        this.httpRequestStartLineResolver = findHttpRequestStartLineResolved();
 
-    @SuppressWarnings({ "rawtypes" })
-    private void init(Class clazz) {
-        Endpoint e = this.getClass().getAnnotation(Endpoint.class);
-        if (e != null) {
-            methodType = e.methodType();
-            methodPath = e.url();
-            return;
-        }
-
-        String typePath = R.API.get(clazz.getSimpleName());
-        if (typePath == null) {
-            throw new RuntimeException("Method type and path are not specified for: " + clazz.getSimpleName());
-        }
-        if (typePath.contains(":")) {
-            methodType = HttpMethodType.valueOf(typePath.split(":")[0]);
-            methodPath = StringUtils.substringAfter(typePath, methodType + ":");
-        } else {
-            methodType = HttpMethodType.valueOf(typePath);
+        if (!this.httpRequestStartLineResolver.isLazyInitialization()) {
+            initParams();
         }
     }
 
-    private void initContentTypeFromAnnotation() {
-        ContentType contentTypeA = this.getClass().getAnnotation(ContentType.class);
-        if (contentTypeA != null) {
-            this.contentTypeEnum = resolveContentType(contentTypeA);
-            this.request.contentType(contentTypeA.type());
-        } else {
-            this.contentTypeEnum = ContentTypeEnum.JSON;
-            this.request.contentType(ContentTypeEnum.JSON.getStringValues()[0]);
-        }
-    }
-
-    private ContentTypeEnum resolveContentType(ContentType contentTypeA) {
-        return Arrays.stream(ContentTypeEnum.values())
-                .filter(ct -> ArrayUtils.contains(ct.getStringValues(), contentTypeA.type()))
+    private HttpRequestStartLineResolver findHttpRequestStartLineResolved() {
+        return HTTP_REQUEST_START_LINE_RESOLVERS.stream()
+                .filter(resolver -> resolver.isSupported(this.getClass()))
                 .findFirst()
-                .orElse(ContentTypeEnum.NA);
+                .orElseThrow(() -> new RuntimeException("Method type and path are not specified for: " + this.getClass().getSimpleName()));
+    }
+
+    void initParams() {
+        this.bodyContent = new StringBuilder();
+        this.request = given();
+
+        this.methodType = this.httpRequestStartLineResolver.getMethodType(this);
+        this.methodPath = this.httpRequestStartLineResolver.getMethodPath(this);
+        this.contentTypeEnum = this.httpRequestStartLineResolver.resolveContentTypeEnumFromAnnotation(this.getClass());
+
+        String contentType = this.httpRequestStartLineResolver.resolveContentTypeFromAnnotation(this.getClass());
+        this.request.contentType(contentType);
+
+        replaceUrlPlaceholders();
     }
 
     private void replaceUrlPlaceholders() {
@@ -155,7 +148,7 @@ public abstract class AbstractApiMethod extends HttpClient {
     private List<String> getParamsFromUrl() {
         List<String> params = new ArrayList<>();
         String path = methodPath;
-        while (path.contains("{")) {
+        while (path.contains("${")) {
             String param = StringUtils.substringBetween(path, "${", "}");
             params.add(param);
             path = StringUtils.substringAfter(path, "}");

@@ -74,12 +74,18 @@ public abstract class AbstractApiMethodV2 extends AbstractApiMethod {
 
     public AbstractApiMethodV2(String rqPath, String rsPath, Properties properties) {
         super();
-        setHeaders(ACCEPT_ALL_HEADER);
+
         if (properties != null) {
             setProperties(properties);
         }
         this.rqPath = rqPath != null ? rqPath : resolveRequestTemplatePathFromAnnotation();
         this.rsPath = rsPath != null ? rsPath : resolveResponseTemplatePathFromAnnotation();
+    }
+
+    @Override
+    void initParams() {
+        super.initParams();
+        setHeaders(ACCEPT_ALL_HEADER);
     }
 
     private String resolveRequestTemplatePathFromAnnotation() {
